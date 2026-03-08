@@ -1,14 +1,25 @@
 import { Moon, Sun } from "lucide-react";
+import { motion } from "framer-motion";
 
 const DarkModeToggle = ({ darkMode, onChange }) => {
   return (
-    <button
+    <motion.button
       onClick={() => onChange(!darkMode)}
-      className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all hover:scale-110 active:scale-95"
+      whileHover={{ scale: 1.15, rotate: 15 }}
+      whileTap={{ scale: 0.9 }}
+      className="p-2.5 rounded-xl glass text-muted-foreground hover:text-foreground transition-colors btn-3d"
       aria-label="Toggle dark mode"
     >
-      {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-    </button>
+      <motion.div
+        key={darkMode ? "sun" : "moon"}
+        initial={{ rotate: -90, opacity: 0 }}
+        animate={{ rotate: 0, opacity: 1 }}
+        exit={{ rotate: 90, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      </motion.div>
+    </motion.button>
   );
 };
 
