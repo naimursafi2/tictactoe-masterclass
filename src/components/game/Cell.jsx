@@ -1,14 +1,16 @@
+import { motion } from "framer-motion";
+
 const Cell = ({ value, index, isWinning, disabled, onClick, textSize = "text-4xl sm:text-5xl" }) => {
   const baseClasses =
-    `relative flex items-center justify-center aspect-square rounded-lg font-display ${textSize} font-bold transition-all duration-200 select-none cursor-pointer border-2`;
+    `relative flex items-center justify-center aspect-square rounded-xl font-display ${textSize} font-bold select-none cursor-pointer cell-3d`;
 
   const emptyClasses = disabled
-    ? "border-border bg-surface cursor-not-allowed"
-    : "border-border bg-surface cell-hover hover:border-primary/40";
+    ? "cursor-not-allowed opacity-60"
+    : "";
 
-  const filledClasses = value === "X"
-    ? `border-player-x/30 bg-surface text-player-x ${isWinning ? "glow-x win-cell border-player-x" : ""}`
-    : `border-player-o/30 bg-surface text-player-o ${isWinning ? "glow-o win-cell border-player-o" : ""}`;
+  const filledX = `text-player-x ${isWinning ? "glow-x win-cell border-player-x" : ""}`;
+  const filledO = `text-player-o ${isWinning ? "glow-o win-cell border-player-o" : ""}`;
+  const filledClasses = value === "X" ? filledX : filledO;
 
   return (
     <button
@@ -17,7 +19,21 @@ const Cell = ({ value, index, isWinning, disabled, onClick, textSize = "text-4xl
       disabled={disabled || !!value}
       aria-label={`Cell ${index + 1}, ${value || "empty"}`}
     >
-      {value && <span className="pop-in">{value}</span>}
+      {value && (
+        <motion.span
+          initial={{ scale: 0, rotate: -20, opacity: 0 }}
+          animate={{ scale: 1, rotate: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          className="drop-shadow-lg"
+          style={{
+            textShadow: value === "X"
+              ? '0 0 20px hsl(260 85% 65% / 0.5)'
+              : '0 0 20px hsl(340 85% 60% / 0.5)',
+          }}
+        >
+          {value}
+        </motion.span>
+      )}
     </button>
   );
 };

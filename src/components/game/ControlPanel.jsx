@@ -1,27 +1,48 @@
 import { RotateCcw, RefreshCw, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ControlPanel = ({ onRestart, onNewMatch, onResetScores, gameOver }) => {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-      <GameButton onClick={onRestart} icon={<RotateCcw className="w-4 h-4" />} label="Restart" variant="primary" pulse={gameOver} />
-      <GameButton onClick={onNewMatch} icon={<RefreshCw className="w-4 h-4" />} label="New Match" variant="secondary" />
-      <GameButton onClick={onResetScores} icon={<Trash2 className="w-4 h-4" />} label="Reset Scores" variant="ghost" />
+    <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+      <GameButton
+        onClick={onRestart}
+        icon={<RotateCcw className="w-4 h-4" />}
+        label="Restart"
+        variant="primary"
+        pulse={gameOver}
+      />
+      <GameButton
+        onClick={onNewMatch}
+        icon={<RefreshCw className="w-4 h-4" />}
+        label="New Match"
+        variant="secondary"
+      />
+      <GameButton
+        onClick={onResetScores}
+        icon={<Trash2 className="w-4 h-4" />}
+        label="Reset Scores"
+        variant="ghost"
+      />
     </div>
   );
 };
 
 function GameButton({ onClick, icon, label, variant, pulse }) {
-  const base = "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 hover:scale-105 active:scale-95";
   const variants = {
-    primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-md",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
-    ghost: "text-muted-foreground hover:text-foreground hover:bg-muted",
+    primary: "bg-primary text-primary-foreground btn-3d",
+    secondary: "glass border text-foreground btn-3d",
+    ghost: "text-muted-foreground hover:text-foreground glass",
   };
 
   return (
-    <button onClick={onClick} className={`${base} ${variants[variant]} ${pulse ? "animate-pulse" : ""}`}>
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.05, y: -2 }}
+      whileTap={{ scale: 0.95, y: 1 }}
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors ${variants[variant]} ${pulse ? "animate-pulse" : ""}`}
+    >
       {icon} {label}
-    </button>
+    </motion.button>
   );
 }
 

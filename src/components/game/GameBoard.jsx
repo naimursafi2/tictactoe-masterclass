@@ -1,4 +1,5 @@
 import Cell from "./Cell";
+import { motion } from "framer-motion";
 
 const sizeClasses = {
   3: "grid-cols-3 max-w-[320px] sm:max-w-[360px]",
@@ -14,7 +15,17 @@ const cellTextSize = {
 
 const GameBoard = ({ board, boardSize, winLine, gameOver, onCellClick }) => {
   return (
-    <div className={`grid gap-1.5 sm:gap-2 w-full mx-auto slide-up ${sizeClasses[boardSize]}`}>
+    <motion.div
+      key={boardSize}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className={`grid gap-2 sm:gap-2.5 w-full mx-auto p-3 sm:p-4 rounded-2xl ${sizeClasses[boardSize]}`}
+      style={{
+        background: 'hsl(0 0% 0% / 0.15)',
+        boxShadow: 'inset 0 2px 10px hsl(0 0% 0% / 0.2), 0 0 0 1px hsl(0 0% 100% / 0.03)',
+      }}
+    >
       {board.map((value, index) => (
         <Cell
           key={`${boardSize}-${index}`}
@@ -26,7 +37,7 @@ const GameBoard = ({ board, boardSize, winLine, gameOver, onCellClick }) => {
           textSize={cellTextSize[boardSize]}
         />
       ))}
-    </div>
+    </motion.div>
   );
 };
 

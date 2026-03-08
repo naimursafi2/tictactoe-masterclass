@@ -156,7 +156,13 @@ export function useGameState() {
   }, [scores, history, darkMode]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
   }, [darkMode]);
 
   const handleCellClick = useCallback(
