@@ -4,25 +4,66 @@ export type Player = "X" | "O";
 export type CellValue = Player | null;
 export type GameMode = "pvp" | "pvc";
 export type Difficulty = "easy" | "medium" | "hard";
-export type GameResult = { winner: Player | "draw"; round: number };
+export type BoardSize = 3 | 5 | 7;
+export type GameResult = { winner: Player | "draw"; round: number; boardSize: BoardSize };
 
-const WINNING_LINES = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6],
-];
+function getWinLength(size: BoardSize): number {
+  if (size === 3) return 3;
+  if (size === 5) return 4;
+  return 5; // 7x7
+}
 
-function checkWinner(board: CellValue[]): { winner: Player; line: number[] } | null {
-  for (const line of WINNING_LINES) {
-    const [a, b, c] = line;
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return { winner: board[a] as Player, line };
+function generateWinningLines(size: BoardSize): number[][] {
+  const winLen = getWinLength(size);
+  const lines: number[][] = [];
+
+  // Rows
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c <= size - winLen; c++) {
+      const line: number[] = [];
+      for (let k = 0; k < winLen; k++) line.push(r * size + c + k);
+      lines.push(line);
+    }
+  }
+  // Columns
+  for (let c = 0; c < size; c++) {
+    for (let r = 0; r <= size - winLen; r++) {
+      const line: number[] = [];
+      for (let k = 0; k < winLen; k++) line.push((r + k) * size + c);
+      lines.push(line);
+    }
+  }
+  // Diag down-right
+  for (let r = 0; r <= size - winLen; r++) {
+    for (let c = 0; c <= size - winLen; c++) {
+      const line: number[] = [];
+      for (let k = 0; k < winLen; k++) line.push((r + k) * size + c + k);
+      lines.push(line);
+    }
+  }
+  // Diag down-left
+  for (let r = 0; r <= size - winLen; r++) {
+    for (let c = winLen - 1; c < size; c++) {
+      const line: number[] = [];
+      for (let k = 0; k < winLen; k++) line.push((r + k) * size + c - k);
+      lines.push(line);
+    }
+  }
+  return lines;
+}
+
+function checkWinner(board: CellValue[], size: BoardSize): { winner: Player; line: number[] } | null {
+  const lines = generateWinningLines(size);
+  for (const line of lines) {
+    const first = board[line[0]];
+    if (first && line.every((i) => board[i] === first)) {
+      return { winner: first as Player, line };
     }
   }
   return null;
 }
 
-function getAIMove(board: CellValue[], difficulty: Difficulty, aiPlayer: Player): number {
+function getAIMove(board: CellValue[], difficulty: Difficulty, aiPlayer: Player, size: BoardSize): number {
   const available = board.map((v, i) => (v === null ? i : -1)).filter((i) => i !== -1);
   if (available.length === 0) return -1;
 
@@ -32,20 +73,38 @@ function getAIMove(board: CellValue[], difficulty: Difficulty, aiPlayer: Player)
     return available[Math.floor(Math.random() * available.length)];
   }
 
-  if (difficulty === "medium") {
-    if (Math.random() < 0.4) {
-      return available[Math.floor(Math.random() * available.length)];
+  // For larger boards, use heuristic instead of minimax (too slow)
+  if (size > 3) {
+    // Try to win
+    for (const i of available) {
+      const copy = [...board];
+      copy[i] = aiPlayer;
+      if (checkWinner(copy, size)) return i;
     }
+    // Block opponent
+    for (const i of available) {
+      const copy = [...board];
+      copy[i] = humanPlayer;
+      if (checkWinner(copy, size)) return i;
+    }
+    // Center or random
+    const center = Math.floor(size * size / 2);
+    if (board[center] === null) return center;
+    return available[Math.floor(Math.random() * available.length)];
   }
 
-  // Minimax for hard (and sometimes medium)
+  if (difficulty === "medium" && Math.random() < 0.4) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Minimax for 3x3
   function minimax(b: CellValue[], isMax: boolean, depth: number): number {
-    const result = checkWinner(b);
+    const result = checkWinner(b, size);
     if (result) return result.winner === aiPlayer ? 10 - depth : depth - 10;
     if (b.every((c) => c !== null)) return 0;
 
     let best = isMax ? -Infinity : Infinity;
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < b.length; i++) {
       if (b[i] !== null) continue;
       b[i] = isMax ? aiPlayer : humanPlayer;
       const score = minimax(b, !isMax, depth + 1);
@@ -92,6 +151,7 @@ function saveStored(state: StoredState) {
 export function useGameState() {
   const stored = loadStored();
 
+  const [boardSize, setBoardSize] = useState<BoardSize>(3);
   const [board, setBoard] = useState<CellValue[]>(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   const [winner, setWinner] = useState<Player | null>(null);
@@ -107,12 +167,10 @@ export function useGameState() {
 
   const gameOver = winner !== null || isDraw;
 
-  // Persist scores/history/dark mode
   useEffect(() => {
     saveStored({ scores, history, darkMode });
   }, [scores, history, darkMode]);
 
-  // Dark mode class
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
@@ -126,80 +184,94 @@ export function useGameState() {
       newBoard[index] = currentPlayer;
       setBoard(newBoard);
 
-      const result = checkWinner(newBoard);
+      const result = checkWinner(newBoard, boardSize);
       if (result) {
         setWinner(result.winner);
         setWinLine(result.line);
         setScores((s) => ({ ...s, [result.winner]: s[result.winner] + 1 }));
-        setHistory((h) => [...h, { winner: result.winner, round: roundNumber }]);
+        setHistory((h) => [...h, { winner: result.winner, round: roundNumber, boardSize }]);
         setTimeout(() => setShowModal(true), 500);
       } else if (newBoard.every((c) => c !== null)) {
         setIsDraw(true);
         setScores((s) => ({ ...s, draw: s.draw + 1 }));
-        setHistory((h) => [...h, { winner: "draw", round: roundNumber }]);
+        setHistory((h) => [...h, { winner: "draw", round: roundNumber, boardSize }]);
         setTimeout(() => setShowModal(true), 500);
       } else {
         setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
       }
     },
-    [board, currentPlayer, gameOver, gameMode, roundNumber]
+    [board, currentPlayer, gameOver, gameMode, roundNumber, boardSize]
   );
 
   // AI move
   useEffect(() => {
     if (gameMode !== "pvc" || currentPlayer !== "O" || gameOver) return;
     const timeout = setTimeout(() => {
-      const move = getAIMove(board, difficulty, "O");
+      const move = getAIMove(board, difficulty, "O", boardSize);
       if (move === -1) return;
       const newBoard = [...board];
       newBoard[move] = "O";
       setBoard(newBoard);
 
-      const result = checkWinner(newBoard);
+      const result = checkWinner(newBoard, boardSize);
       if (result) {
         setWinner(result.winner);
         setWinLine(result.line);
         setScores((s) => ({ ...s, [result.winner]: s[result.winner] + 1 }));
-        setHistory((h) => [...h, { winner: result.winner, round: roundNumber }]);
+        setHistory((h) => [...h, { winner: result.winner, round: roundNumber, boardSize }]);
         setTimeout(() => setShowModal(true), 500);
       } else if (newBoard.every((c) => c !== null)) {
         setIsDraw(true);
         setScores((s) => ({ ...s, draw: s.draw + 1 }));
-        setHistory((h) => [...h, { winner: "draw", round: roundNumber }]);
+        setHistory((h) => [...h, { winner: "draw", round: roundNumber, boardSize }]);
         setTimeout(() => setShowModal(true), 500);
       } else {
         setCurrentPlayer("X");
       }
     }, 400);
     return () => clearTimeout(timeout);
-  }, [currentPlayer, gameMode, gameOver, board, difficulty, roundNumber]);
+  }, [currentPlayer, gameMode, gameOver, board, difficulty, roundNumber, boardSize]);
 
-  const restartRound = useCallback(() => {
-    setBoard(Array(9).fill(null));
+  const resetBoard = useCallback(() => {
+    setBoard(Array(boardSize * boardSize).fill(null));
     setCurrentPlayer("X");
     setWinner(null);
     setWinLine(null);
     setIsDraw(false);
     setShowModal(false);
+  }, [boardSize]);
+
+  const restartRound = useCallback(() => {
+    resetBoard();
     setRoundNumber((r) => r + 1);
-  }, []);
+  }, [resetBoard]);
 
   const newMatch = useCallback(() => {
-    restartRound();
+    resetBoard();
     setScores({ X: 0, O: 0, draw: 0 });
     setHistory([]);
     setRoundNumber(1);
-  }, [restartRound]);
+  }, [resetBoard]);
 
   const resetScores = useCallback(() => {
     setScores({ X: 0, O: 0, draw: 0 });
     setHistory([]);
   }, []);
 
+  const changeBoardSize = useCallback((size: BoardSize) => {
+    setBoardSize(size);
+    setBoard(Array(size * size).fill(null));
+    setCurrentPlayer("X");
+    setWinner(null);
+    setWinLine(null);
+    setIsDraw(false);
+    setShowModal(false);
+  }, []);
+
   return {
-    board, currentPlayer, winner, winLine, isDraw, gameOver,
+    board, boardSize, currentPlayer, winner, winLine, isDraw, gameOver,
     scores, history, gameMode, difficulty, darkMode, showModal, roundNumber,
-    handleCellClick, restartRound, newMatch, resetScores,
+    handleCellClick, restartRound, newMatch, resetScores, changeBoardSize,
     setGameMode, setDifficulty, setDarkMode, setShowModal,
   };
 }

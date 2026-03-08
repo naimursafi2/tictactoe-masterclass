@@ -6,11 +6,12 @@ interface CellProps {
   isWinning: boolean;
   disabled: boolean;
   onClick: (index: number) => void;
+  textSize?: string;
 }
 
-const Cell = ({ value, index, isWinning, disabled, onClick }: CellProps) => {
+const Cell = ({ value, index, isWinning, disabled, onClick, textSize = "text-4xl sm:text-5xl" }: CellProps) => {
   const baseClasses =
-    "relative flex items-center justify-center aspect-square rounded-lg font-display text-4xl sm:text-5xl font-bold transition-all duration-200 select-none cursor-pointer border-2";
+    `relative flex items-center justify-center aspect-square rounded-lg font-display ${textSize} font-bold transition-all duration-200 select-none cursor-pointer border-2`;
 
   const emptyClasses = disabled
     ? "border-border bg-surface cursor-not-allowed"
