@@ -1,4 +1,4 @@
-import { History } from "lucide-react";
+import { History, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const GameHistory = ({ history }) => {
@@ -8,23 +8,24 @@ const GameHistory = ({ history }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[400px] mx-auto glass rounded-2xl p-4"
+      transition={{ delay: 0.3 }}
+      className="w-full max-w-[420px] mx-auto glass-card rounded-2xl p-4"
     >
       <div className="flex items-center gap-2 mb-3 text-muted-foreground">
         <History className="w-4 h-4" />
-        <span className="text-[10px] font-medium uppercase tracking-widest">Recent Rounds</span>
+        <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.15em]">Recent Rounds</span>
       </div>
       <div className="flex flex-wrap gap-2">
         <AnimatePresence>
           {recent.map((r, i) => (
-            <motion.span
+            <motion.div
               key={`${r.round}-${r.winner}`}
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium glass ${
+              transition={{ delay: i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold glass ${
                 r.winner === "X"
                   ? "text-player-x"
                   : r.winner === "O"
@@ -33,14 +34,15 @@ const GameHistory = ({ history }) => {
               }`}
               style={{
                 boxShadow: r.winner === "X"
-                  ? '0 0 10px hsl(260 85% 65% / 0.15)'
+                  ? '0 0 12px hsl(265 90% 65% / 0.12)'
                   : r.winner === "O"
-                  ? '0 0 10px hsl(340 85% 60% / 0.15)'
-                  : '0 0 10px hsl(45 90% 55% / 0.1)',
+                  ? '0 0 12px hsl(340 90% 62% / 0.12)'
+                  : '0 0 12px hsl(48 95% 55% / 0.08)',
               }}
             >
+              <Zap className="w-3 h-3" />
               R{r.round}: {r.winner === "draw" ? "Draw" : `${r.winner} won`}
-            </motion.span>
+            </motion.div>
           ))}
         </AnimatePresence>
       </div>
