@@ -149,21 +149,28 @@ function saveStored(state: StoredState) {
 }
 
 export function useGameState() {
-  const stored = loadStored();
-
   const [boardSize, setBoardSize] = useState<BoardSize>(3);
   const [board, setBoard] = useState<CellValue[]>(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   const [winner, setWinner] = useState<Player | null>(null);
   const [winLine, setWinLine] = useState<number[] | null>(null);
   const [isDraw, setIsDraw] = useState(false);
-  const [scores, setScores] = useState(stored.scores);
-  const [history, setHistory] = useState<GameResult[]>(stored.history);
+  const [scores, setScores] = useState<{ X: number; O: number; draw: number }>({ X: 0, O: 0, draw: 0 });
+  const [history, setHistory] = useState<GameResult[]>([]);
   const [gameMode, setGameMode] = useState<GameMode>("pvp");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [darkMode, setDarkMode] = useState(stored.darkMode);
+  const [darkMode, setDarkMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [roundNumber, setRoundNumber] = useState(stored.history.length + 1);
+  const [roundNumber, setRoundNumber] = useState(1);
+
+  // Load from localStorage on mount only
+  useEffect(() => {
+    const stored = loadStored();
+    setScores(stored.scores);
+    setHistory(stored.history);
+    setDarkMode(stored.darkMode);
+    setRoundNumber(stored.history.length + 1);
+  }, []);
 
   const gameOver = winner !== null || isDraw;
 
