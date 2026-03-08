@@ -4,6 +4,7 @@ import ScoreBoard from "@/components/game/ScoreBoard";
 import GameStatus from "@/components/game/GameStatus";
 import ControlPanel from "@/components/game/ControlPanel";
 import ModeSelector from "@/components/game/ModeSelector";
+import BoardSizeSelector from "@/components/game/BoardSizeSelector";
 import WinModal from "@/components/game/WinModal";
 import GameHistory from "@/components/game/GameHistory";
 import DarkModeToggle from "@/components/game/DarkModeToggle";
@@ -23,14 +24,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-background relative">
-      {/* Dark mode toggle */}
       <div className="absolute top-4 right-4">
         <DarkModeToggle darkMode={game.darkMode} onChange={game.setDarkMode} />
       </div>
 
-      {/* Main container */}
-      <div className="w-full max-w-md flex flex-col items-center gap-5 sm:gap-6">
-        {/* Header */}
+      <div className="w-full max-w-lg flex flex-col items-center gap-5 sm:gap-6">
         <div className="text-center slide-up">
           <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-foreground">
             Tic-Tac-Toe
@@ -40,18 +38,18 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Mode selector */}
-        <ModeSelector
-          gameMode={game.gameMode}
-          difficulty={game.difficulty}
-          onModeChange={handleModeChange}
-          onDifficultyChange={handleDifficultyChange}
-        />
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <ModeSelector
+            gameMode={game.gameMode}
+            difficulty={game.difficulty}
+            onModeChange={handleModeChange}
+            onDifficultyChange={handleDifficultyChange}
+          />
+          <BoardSizeSelector boardSize={game.boardSize} onChange={game.changeBoardSize} />
+        </div>
 
-        {/* Scoreboard */}
         <ScoreBoard scores={game.scores} gameMode={game.gameMode} />
 
-        {/* Game status */}
         <GameStatus
           winner={game.winner}
           isDraw={game.isDraw}
@@ -59,15 +57,14 @@ const Index = () => {
           gameMode={game.gameMode}
         />
 
-        {/* Board */}
         <GameBoard
           board={game.board}
+          boardSize={game.boardSize}
           winLine={game.winLine}
           gameOver={game.gameOver}
           onCellClick={game.handleCellClick}
         />
 
-        {/* Controls */}
         <ControlPanel
           onRestart={game.restartRound}
           onNewMatch={game.newMatch}
@@ -75,14 +72,13 @@ const Index = () => {
           gameOver={game.gameOver}
         />
 
-        {/* History */}
         <GameHistory history={game.history} />
 
-        {/* Round indicator */}
-        <p className="text-xs text-muted-foreground">Round {game.roundNumber}</p>
+        <p className="text-xs text-muted-foreground">
+          Round {game.roundNumber} · {game.boardSize}×{game.boardSize} board · {game.boardSize === 3 ? 3 : game.boardSize === 5 ? 4 : 5} in a row to win
+        </p>
       </div>
 
-      {/* Win/Draw modal */}
       <WinModal
         show={game.showModal}
         winner={game.winner}
